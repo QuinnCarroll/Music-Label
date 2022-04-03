@@ -1,21 +1,3 @@
-<!--Test Oracle file for UBC CPSC304 2018 Winter Term 1
-  Created by Jiemin Zhang
-  Modified by Simona Radu
-  Modified by Jessica Wong (2018-06-22)
-  This file shows the very basics of how to execute PHP commands
-  on Oracle.
-  Specifically, it will drop a table, create a table, insert values
-  update values, and then query for values
-
-  IF YOU HAVE A TABLE CALLED "demoTable" IT WILL BE DESTROYED
-
-  The script assumes you already have a server set up
-  All OCI commands are commands to the Oracle libraries
-  To get the file to work, you must place it somewhere where your
-  Apache server can run it, and you must rename it to have a ".php"
-  extension.  You must also change the username and password on the
-  OCILogon below to be your ORACLE username and password -->
-
 <html>
     <head>
         <title>Music Label Database</title>
@@ -24,67 +6,85 @@
     <body>
         <h1>Music Label Database</h1>
         <p>This database consists of two tables, artists and albums</p>
+        <form method="GET" action="music-label.php"> <!--refresh page when submitted-->
+            <input type="submit" value="View Artists" name="viewArtistsRequest"></p>
+            <input type="submit" value="View Albums" name="viewAlbumsRequest"></p>
+        </form>
         <hr />
 
-        <h2>Reset</h2>
-        <p>If you wish to reset the table press on the reset button. If this is the first time you're running this page, you MUST use reset</p>
+        <h2>Selection</h2>
+        <form method="GET" action="music-label.php"> <!--refresh page when submitted-->
+            <input type="hidden" id="selectQueryRequest" name="selectQueryRequest">
+            Table Name: <input type="text" name="selTableName"> <br /><br />
+            Column to Display: <input type="text" name="selCol1"> <br /><br />
+            Where Column: <input type="text" name="selCol2"> >= 0 <br /><br />
 
-        <form method="POST" action="music-label.php">
-            <!-- if you want another page to load after the button is clicked, you have to specify that page in the action parameter -->
-            <input type="hidden" id="resetTablesRequest" name="resetTablesRequest">
-            <p><input type="submit" value="Reset" name="reset"></p>
+            <input type="submit" value="Fetch" name="selectQueryRequest"></p>
         </form>
 
         <hr />
 
-        <h2>Insert Values</h2>
-        <form method="POST" action="music-label.php"> <!--refresh page when submitted-->
-            <input type="hidden" id="insertQueryRequest" name="insertQueryRequest">
-            Table Name: <input type="text" name="insTableName"> <br /><br />
-            Number: <input type="text" name="insNo"> <br /><br />
-            Name: <input type="text" name="insName"> <br /><br />
+        <h2>Projection</h2>
+        <form method="GET" action="music-label.php"> <!--refresh page when submitted-->
+            <input type="hidden" id="selectQueryRequest" name="selectQueryRequest">
+            Table Name: <input type="text" name="selTableName"> <br /><br />
+            Column to Display: <input type="text" name="selCol1"> <br /><br />
 
-            <input type="submit" value="Insert" name="insertSubmit"></p>
+            <input type="submit" value="Fetch" name="selectQueryRequest"></p>
         </form>
 
         <hr />
 
-        <h2>Delete Values</h2>
+        <h2>Join</h2>
+        <p>This query joins the artists and albums tables, finding the names of all artists who has more than x sales on any album (x being user specified)</p>
+        <form method="GET" action="music-label.php"> <!--refresh page when submitted-->
+            <input type="hidden" id="joinQueryRequest" name="joinQueryRequest">
+            Minimum Sales: <input type="text" name="minSales"> <br /><br />
+
+            <input type="submit" value="Fetch" name="joinQueryRequest"></p>
+        </form>
+
+        <hr />
+
+        
+        <h2>Delete Artists</h2>
         <form method="POST" action="music-label.php"> <!--refresh page when submitted-->
             <input type="hidden" id="deleteQueryRequest" name="deleteQueryRequest">
-            Table Name: <input type="text" name="deleteTableName"> <br /><br />
-            Number: <input type="text" name="deleteNo"> <br /><br />
+            ArtistID: <input type="text" name="deleteNo"> <br /><br />
 
             <input type="submit" value="Delete" name="deleteSubmit"></p>
         </form>
 
-        <h2>Update Name in artists</h2>
-        <p>The values are case sensitive and if you enter in the wrong case, the update statement will not do anything.</p>
+        <hr /> 
 
-        <form method="POST" action="music-label.php"> <!--refresh page when submitted-->
-            <input type="hidden" id="updateQueryRequest" name="updateQueryRequest">
-            Old Name: <input type="text" name="oldName"> <br /><br />
-            New Name: <input type="text" name="newName"> <br /><br />
+        
+        <h2>Nested Aggregation with Group-by</h2>
+        <p>This query outputs the average number of sales made per artist</p>
+        <form method="GET" action="music-label.php"> <!--refresh page when submitted-->
+            <input type="hidden" id="nestedAggregationQueryRequest" name="nestedAggregationQueryRequest">
 
-            <input type="submit" value="Update" name="updateSubmit"></p>
+            <input type="submit" value="Fetch" name="nestedAggregationQueryRequest"></p>
         </form>
 
-        <hr />
+        <hr /> 
 
-        <h2>Count the Tuples in DemoTable</h2>
+        <h2>Count Tuples</h2>
         <form method="GET" action="music-label.php"> <!--refresh page when submitted-->
             <input type="hidden" id="countTupleRequest" name="countTupleRequest">
-            <input type="submit" name="countTuples"></p>
+            <input type="submit" value="Count Artists" name="countArtistTuples"></p>
+        </form>
+        <form method="GET" action="music-label.php"> <!--refresh page when submitted-->
+            <input type="hidden" id="countTupleRequest" name="countTupleRequest">
+            <input type="submit" value="Count Albums" name="countAlbumTuples"></p>
         </form>
 
         <hr />
+        <h2>Results</h2>
 
         <?php
-		//this tells the system that it's no longer just parsing html; it's now parsing PHP
-
-        $success = True; //keep track of errors so it redirects the page only if there are no errors
-        $db_conn = NULL; // edit the login credentials in connectToDB()
-        $show_debug_alert_messages = False; // set to True if you want alerts to show you which methods are being triggered (see how it is used in debugAlertMessage())
+        $success = True; 
+        $db_conn = NULL; 
+        $show_debug_alert_messages = False; 
 
         function debugAlertMessage($message) {
             global $show_debug_alert_messages;
@@ -93,13 +93,10 @@
                 echo "<script type='text/javascript'>alert('" . $message . "');</script>";
             }
         }
-
-        function executePlainSQL($cmdstr) { //takes a plain (no bound variables) SQL command and executes it
-            //echo "<br>running ".$cmdstr."<br>";
+        function executePlainSQL($cmdstr) {
             global $db_conn, $success;
 
             $statement = OCIParse($db_conn, $cmdstr);
-            //There are a set of comments at the end of the file that describe some of the OCI specific functions and how they work
 
             if (!$statement) {
                 echo "<br>Cannot parse the following command: " . $cmdstr . "<br>";
@@ -111,56 +108,40 @@
             $r = OCIExecute($statement, OCI_DEFAULT);
             if (!$r) {
                 echo "<br>Cannot execute the following command: " . $cmdstr . "<br>";
-                $e = oci_error($statement); // For OCIExecute errors pass the statementhandle
+                $e = oci_error($statement); 
                 echo htmlentities($e['message']);
                 $success = False;
-            }
+            } 
 
 			return $statement;
 		}
 
-        function executeBoundSQL($cmdstr, $list) {
-            /* Sometimes the same statement will be executed several times with different values for the variables involved in the query.
-		In this case you don't need to create the statement several times. Bound variables cause a statement to only be
-		parsed once and you can reuse the statement. This is also very useful in protecting against SQL injection.
-		See the sample code below for how this function is used */
+        function printResult($statement, $tableName, $displayCol ) {
+            //echo "<br>Retrieved data from table {$tableName}:<br>";
+            echo "<table>";
 
-			global $db_conn, $success;
-			$statement = OCIParse($db_conn, $cmdstr);
-
-            if (!$statement) {
-                echo "<br>Cannot parse the following command: " . $cmdstr . "<br>";
-                $e = OCI_Error($db_conn);
-                echo htmlentities($e['message']);
-                $success = False;
+            echo "<tr><th>{$displayCol}</th></tr>";
+            while ($row = OCI_Fetch_Array($statement, OCI_BOTH)) {
+                echo "<tr><td>{$row[0]}</td></tr>";
             }
 
-            foreach ($list as $tuple) {
-                foreach ($tuple as $bind => $val) {
-                    //echo $val;
-                    //echo "<br>".$bind."<br>";
-                    OCIBindByName($statement, $bind, $val);
-                    unset ($val); //make sure you do not remove this. Otherwise $val will remain in an array object wrapper which will not be recognized by Oracle as a proper datatype
-				}
-
-                $r = OCIExecute($statement, OCI_DEFAULT);
-                if (!$r) {
-                    echo "<br>Cannot execute the following command: " . $cmdstr . "<br>";
-                    $e = OCI_Error($statement); // For OCIExecute errors, pass the statementhandle
-                    echo htmlentities($e['message']);
-                    echo "<br>";
-                    $success = False;
-                }
-            }
+            echo "</table>";
         }
 
-        function printResult($result) { //prints results from a select statement
-            echo "<br>Retrieved data from table demoTable:<br>";
+        function printTable($statement, $tableName, $displayCols ) {
+            echo "<br>Retrieved data from table {$tableName}:<br>";
             echo "<table>";
-            echo "<tr><th>ID</th><th>Name</th></tr>";
-
-            while ($row = OCI_Fetch_Array($result, OCI_BOTH)) {
-                echo "<tr><td>" . $row["ID"] . "</td><td>" . $row["NAME"] . "</td></tr>"; //or just use "echo $row[0]"
+            echo "<tr>";
+            for ($x = 0; $x < count($displayCols); $x++) {
+                echo "<th>{$displayCols[$x]}</th>";
+            }
+            echo "</tr>";
+            while ($row = OCI_Fetch_Array($statement, OCI_BOTH)) {
+                echo "<tr>";
+                for ($i = 0; $i < count($displayCols); $i++) {
+                    echo "<td>{$row[$i]}</td>";
+                }
+                echo "</tr>";
             }
 
             echo "</table>";
@@ -169,8 +150,6 @@
         function connectToDB() {
             global $db_conn;
 
-            // Your username is ora_(CWL_ID) and the password is a(student number). For example,
-			// ora_platypus is the username and a12345678 is the password.
             $db_conn = OCILogon("ora_carrollq", "a63615926", "dbhost.students.cs.ubc.ca:1522/stu");
 
             if ($db_conn) {
@@ -191,74 +170,64 @@
             OCILogoff($db_conn);
         }
 
-        function handleUpdateRequest() {
+        function handleSelectRequest() {
             global $db_conn;
 
-            $old_name = $_POST['oldName'];
-            $new_name = $_POST['newName'];
-
-            // you need the wrap the old name and new name values with single quotations
-            executePlainSQL("UPDATE demoTable SET name='" . $new_name . "' WHERE name='" . $old_name . "'");
+            $tableName=$_GET['selTableName'];
+            $displayCol=$_GET['selCol1'];
+            $compCol=$_GET['selCol2'];
+            if ($compCol) {
+                $statement = executePlainSQL("select {$displayCol} from {$tableName} where {$compCol} >= 0");
+            } else {
+                $statement = executePlainSQL("select {$displayCol} from {$tableName}");
+            }
+            
+            OCIExecute($statement, OCI_DEFAULT);
+            printResult($statement, $tableName, $displayCol);
             OCICommit($db_conn);
         }
 
-        function handleResetRequest() {
+        function handleJoinRequest() {
             global $db_conn;
-            // Drop old table
-            executePlainSQL("DROP TABLE demoTable");
 
-            // Create new table
-            echo "<br> creating new table <br>";
-            executePlainSQL("CREATE TABLE demoTable (id int PRIMARY KEY, name char(30))");
+            $minSales=$_GET['minSales'];
+
+            $statement = executePlainSQL("select distinct name from artists, albums where artists.artistid = albums.artistid and sales >= {$minSales}");
+
+            
+            OCIExecute($statement, OCI_DEFAULT);
+            printResult($statement, "(artists x albums)", "name");
             OCICommit($db_conn);
         }
 
-        function handleInsertRequest() {
+        function handleNestedAggregationQueryRequest() {
             global $db_conn;
 
-            //Getting the values from user and insert data into the table
-            $tuple = array (
-                ":bind1" => $_POST['insNo'],
-                ":bind2" => $_POST['insName']
-            );
+            $statement = executePlainSQL("select name, AVG(sales) from artists, albums where artists.artistID = albums.artistid group by name");
 
-            $alltuples = array (
-                $tuple
-            );
-
-            executeBoundSQL("insert into demoTable values (:bind1, :bind2)", $alltuples);
+            OCIExecute($statement, OCI_DEFAULT);
+            printTable($statement, "(artists x albums)", ["name", "sales"]);
             OCICommit($db_conn);
         }
 
         function handleDeleteRequest() {
             global $db_conn;
 
-            //Getting the values from user and insert data into the table
-            $tuple = array (
-                ":bind1" => $_POST['deleteTableName'],
-                ":bind2" => $_POST['deleteNo']
-            );
-
-            $alltuples = array (
-                $tuple
-            );
-
-            executeBoundSQL("delete from {$allTuples[':bind1']} where artistID={$allTuples[':bind2']}");
+            $artistID=$_POST['deleteNo'];
+            executePlainSQL("delete from ARTISTS where artistID={$artistID}");
             OCICommit($db_conn);
         }
 
-        function handleCountRequest() {
+        function handleCountRequest( $table ) {
             global $db_conn;
 
-            $result = executePlainSQL("SELECT Count(*) FROM artists");
+            $result = executePlainSQL("SELECT Count(*) FROM {$table}");
 
             if (($row = oci_fetch_row($result)) != false) {
-                echo "<br> The number of tuples in artists: " . $row[0] . "<br>";
+                echo "<br> The number of tuples in {$table}: " . $row[0] . "<br>";
             }
         }
 
-        // HANDLE ALL POST ROUTES
-	// A better coding practice is to have one method that reroutes your requests accordingly. It will make it easier to add/remove functionality.
         function handlePOSTRequest() {
             if (connectToDB()) {
                 if (array_key_exists('resetTablesRequest', $_POST)) {
@@ -275,12 +244,18 @@
             }
         }
 
-        // HANDLE ALL GET ROUTES
-	// A better coding practice is to have one method that reroutes your requests accordingly. It will make it easier to add/remove functionality.
         function handleGETRequest() {
             if (connectToDB()) {
-                if (array_key_exists('countTuples', $_GET)) {
-                    handleCountRequest();
+                if (array_key_exists('countArtistTuples', $_GET)) {
+                    handleCountRequest("artists");
+                } elseif (array_key_exists('countAlbumTuples', $_GET)) {
+                    handleCountRequest("albums");
+                } elseif (array_key_exists('selectQueryRequest', $_GET)) {
+                    handleSelectRequest();
+                } elseif (array_key_exists('joinQueryRequest', $_GET)) {
+                    handleJoinRequest();
+                } elseif (array_key_exists('nestedAggregationQueryRequest', $_GET)) {
+                    handleNestedAggregationQueryRequest();
                 }
 
                 disconnectFromDB();
@@ -289,10 +264,8 @@
 
 		if (isset($_POST['reset']) || isset($_POST['updateSubmit']) || isset($_POST['insertSubmit']) || isset($_POST['deleteSubmit'])) {
             handlePOSTRequest();
-        } else if (isset($_GET['countTupleRequest'])) {
+        } else if (isset($_GET['countTupleRequest']) || isset($_GET['selectQueryRequest']) || isset($_GET['joinQueryRequest']) || isset($_GET['nestedAggregationQueryRequest'])) {
             handleGETRequest();
-        } else if (isset($_POST['displayArtists'])) {
-            printResult(executePlainSQL("SELECT * FROM artists"), "artists");
         }
 		?>
 	</body>
